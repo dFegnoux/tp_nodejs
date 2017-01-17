@@ -1,0 +1,14 @@
+{
+	"name": "socketChat",
+	"version": "0.1.0",
+	"dependencies": {
+		"express": "~4.11.0",
+		"ejs": "~2.1.4",
+		"cookie-session": "~1.1.0",
+		"body-parser": "~1.10.1",
+		"socket.io": "~1.0.0",
+		"ent": "~2.2.0"
+	},
+	"author": "Denis Fegnoux <denis.fegnoux@gmail.com",
+	"description": "Mini chat work (exercise from openclassroom)"
+}

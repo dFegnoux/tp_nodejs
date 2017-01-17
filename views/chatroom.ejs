@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>Mini chatroom</title>
+    </head>
+ 
+    <body>
+        <h1>Mini chatroom!</h1>
+        <div class="chat-container"></div>
+        <form action="/chatroom/send/" method="post">
+            <p>
+                <input type="text" name="newMessage" id="newMessage" autofocus />
+                <input type="submit" value="Send"/>
+            </p>
+        </form>
+
+        <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            var socket = io.connect('http://localhost:8080'),
+                $chatContainer = $('.chat-container'),
+                pseudo = prompt('Quel est votre pseudo ?'),
+                addMessage = function(message) {
+                    $('.chat-container').append('<div class="user-message"><span class="username">'+message.username+'</span> : '+message.message+'</div>');
+                };
+
+            // Notify new user to server
+            socket.emit('new_connection', pseudo);
+
+            // Handle messages from server
+            socket.on('chatroom-information', function(message) {
+                $('.chat-container').append('<div class="chatroom-information"><i>'+message+'</i></div>');
+            })
+
+            // Display received message from another user
+            socket.on('user-message', addMessage);
+
+            // Send message to server and add it to local chatbox
+            $('form').on('submit', function(e) {
+                e.preventDefault();
+                var $messageInput = $(this).find('#newMessage'),
+                    message = {
+                    username: pseudo,
+                    message: $messageInput.val()
+                }
+
+                // Server emition
+                socket.emit('user-message', message);
+
+                // Local
+                addMessage({
+                    username: pseudo,
+                    message: $messageInput.val()
+                });
+
+                // Clean form
+                $messageInput.val("");
+            });
+        </script>
+    </body>
+</html>
