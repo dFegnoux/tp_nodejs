@@ -8,6 +8,7 @@
     <body>
         <h1>Mini chatroom!</h1>
         <div class="chat-container"></div>
+        <div class="is-typing"></div>
         <form action="/chatroom/send/" method="post">
             <p>
                 <input type="text" name="newMessage" id="newMessage" autofocus />
@@ -20,6 +21,8 @@
         <script>
             var socket = io.connect('http://localhost:8080'),
                 $chatContainer = $('.chat-container'),
+                $messageInput = $('#newMessage'),
+                $isTypingField = $('.is-typing'),
                 pseudo = prompt('Quel est votre pseudo ?'),
                 addMessage = function(message) {
                     $('.chat-container').append('<div class="user-message"><span class="username">'+message.username+'</span> : '+message.message+'</div>');
@@ -36,11 +39,30 @@
             // Display received message from another user
             socket.on('user-message', addMessage);
 
+            $messageInput.on('focus', function(e) {
+                $messageInput.data('oldvalue', $messageInput.val());
+            });
+
+            // Watch when user is typing and then emit to server
+            $messageInput.on('propertychange change click keyup input paste', function(e) {
+                if($messageInput.val() && $messageInput.val() !== $messageInput.data('oldvalue')) {
+                    $messageInput.data('oldvalue', $messageInput.val());
+                    socket.emit('user-is-typing', pseudo);
+                } else {
+                    socket.emit('user-has-stop-typing', pseudo);
+                }
+            });
+
+            // Display a message if someone is typing
+            socket.on('user-is-typing', function(message) {
+                console.log('someone is typing!', message);
+                $isTypingField.text(message);
+            });
+
             // Send message to server and add it to local chatbox
             $('form').on('submit', function(e) {
                 e.preventDefault();
-                var $messageInput = $(this).find('#newMessage'),
-                    message = {
+                var message = {
                     username: pseudo,
                     message: $messageInput.val()
                 }
