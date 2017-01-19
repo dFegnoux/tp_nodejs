@@ -11,7 +11,7 @@
         <div class="is-typing"></div>
         <form action="/chatroom/send/" method="post">
             <p>
-                <input type="text" name="newMessage" id="newMessage" autofocus />
+                <input type="text" name="newMessage" id="newMessage" />
                 <input type="submit" value="Send"/>
             </p>
         </form>
@@ -43,13 +43,18 @@
                 $messageInput.data('oldvalue', $messageInput.val());
             });
 
+            $messageInput.on('blur', function(e) {
+                // socket.emit('user-has-stop-typing', pseudo);
+            });
+
             // Watch when user is typing and then emit to server
-            $messageInput.on('propertychange change click keyup input paste', function(e) {
+            $messageInput.on('input', function(e) {
                 if($messageInput.val() && $messageInput.val() !== $messageInput.data('oldvalue')) {
                     $messageInput.data('oldvalue', $messageInput.val());
                     socket.emit('user-is-typing', pseudo);
                 } else {
                     socket.emit('user-has-stop-typing', pseudo);
+                    console.log('stop typing!');
                 }
             });
 

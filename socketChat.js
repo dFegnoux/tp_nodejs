@@ -4,6 +4,7 @@ var express = require('express'),
     ent = require('ent'), // Escape unsafe characters middleware
     _und = require('underscore'), // Parameters middleware
     urlencodedParser = bodyParser.urlencoded({ extended: false }),
+    typingUsers = [],
 
     app = express(),
     server = require('http').Server(app),
@@ -15,6 +16,14 @@ var express = require('express'),
         next();
     };
 
+    updateUserTyping = function(socket) {
+        var baseMessage = '';
+        if(typingUsers.length) {
+            var singplural = typingUsers.length > 1 ? 'are' : 'is';
+            baseMessage = typingUsers.join(', ') +' '+ singplural + ' typing something...';
+        }
+        socket.broadcast.emit('user-is-typing', baseMessage);
+    };
 
 app.use(session({secret: 'chatroom'}))
 .use(initSession)
@@ -31,8 +40,6 @@ app.use(session({secret: 'chatroom'}))
 
 // Chargement de socket.io
 var io = require('socket.io').listen(server);
-
-var typingUsers = [];
 
 io.sockets.on('connection', function (socket, pseudo) {
     // Connection feedback to client
@@ -54,24 +61,23 @@ io.sockets.on('connection', function (socket, pseudo) {
 
     // Listen if user is typing then broadcast it
     socket.on('user-is-typing', function() {
-        console.log(_und.indexOf(typingUsers, socket.pseudo));
-        console.log(socket.pseudo);
+        console.log('*Start function* Typing users right now : ', typingUsers);
         if(_und.indexOf(typingUsers, socket.pseudo) === -1) {
+            console.log(socket.pseudo+' starts writing');
             typingUsers.push(socket.pseudo);
-            console.log('typing-users : ' + typingUsers.join(', '));
-            if(typingUsers.length) {
-                var singplural = typingUsers.length > 1 ? 'are' : 'is';
-                socket.broadcast.emit('user-is-typing', typingUsers.join(', ') +' '+ singplural + ' typing something...');
-            }
+            updateUserTyping(socket);
         }
+        console.log('*End function* Typing users right now : ', typingUsers);
     });
 
     socket.on('user-has-stop-typing', function() {
+        console.log(socket.pseudo+' has stop typing');
         var indexOfUser = _und.indexOf(typingUsers, socket.pseudo);
         if(indexOfUser > -1) {
             typingUsers.splice(indexOfUser, 1);
         }
         console.log('typing-users : ' + typingUsers.join(', '));
+        updateUserTyping(socket);
     });
 });
 
