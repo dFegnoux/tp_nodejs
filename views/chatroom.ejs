@@ -3,98 +3,28 @@
     <head>
         <meta charset="utf-8" />
         <title>Mini chatroom</title>
+        <link href="public/css/reset.css" type="text/css" rel="stylesheet">
+        <link href="public/css/chatroom.css" type="text/css" rel="stylesheet">
     </head>
  
     <body>
-        <h1>Mini chatroom!</h1>
-        <div class="message-zone">
-            <div class="chat-container"></div>
-            <div class="is-typing"></div>
-            <form action="/chatroom/send/" method="post">
-                <p>
-                    <input type="text" name="newMessage" id="newMessage" />
-                    <input type="submit" value="Send"/>
-                </p>
-            </form>
+        <div class="container">
+            <h1>Mini chatroom!</h1>
+            <div class="message-zone">
+                <div class="chat-container"></div>
+                <div class="is-typing"></div>
+                <form action="/chatroom/send/" method="post">
+                    <p>
+                        <input type="text" name="newMessage" id="newMessage" class="message-input"/>
+                        <input type="submit" value="Send" class="submit-btn"/>
+                    </p>
+                </form>
+            </div>
+            <div class="user-list"></div>
         </div>
-        <ul class="user-list"></ul>
 
         <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
         <script src="/socket.io/socket.io.js"></script>
-        <script>
-            var socket = io.connect('http://localhost:8080'),
-                $chatContainer = $('.chat-container'),
-                $messageInput = $('#newMessage'),
-                $isTypingField = $('.is-typing'),
-                $userList = $('.user-list'),
-                pseudo = prompt('Quel est votre pseudo ?'),
-                addMessage = function(message) {
-                    $('.chat-container').append('<div class="user-message"><span class="username">'+message.username+'</span> : '+message.message+'</div>');
-                };
-
-            // Notify new user to server
-            socket.emit('new_connection', pseudo);
-
-            // Handle messages from server
-            socket.on('chatroom-information', function(message) {
-                $('.chat-container').append('<div class="chatroom-information"><i>'+message+'</i></div>');
-            })
-
-            // Display received message from another user
-            socket.on('user-message', addMessage);
-
-            $messageInput.on('focus', function(e) {
-                $messageInput.data('oldvalue', $messageInput.val());
-            });
-
-            $messageInput.on('blur', function(e) {
-                // socket.emit('user-has-stop-typing', pseudo);
-            });
-
-            // Watch when user is typing and then emit to server
-            $messageInput.on('input', function(e) {
-                if($messageInput.val() && $messageInput.val() !== $messageInput.data('oldvalue')) {
-                    $messageInput.data('oldvalue', $messageInput.val());
-                    socket.emit('user-is-typing', pseudo);
-                } else {
-                    socket.emit('user-has-stop-typing', pseudo);
-                }
-            });
-
-            // Display a message if someone is typing
-            socket.on('user-is-typing', function(message) {
-                $isTypingField.text(message);
-            });
-
-            // Update online user list when it changes
-            socket.on('online-users-update', function(onlineUsers) {
-                var list = '';
-                onlineUsers.forEach(function(userName) {
-                    list += '<li>'+userName+'</li>';
-                });
-                $userList.html(list);
-            });
-
-            // Send message to server and add it to local chatbox
-            $('form').on('submit', function(e) {
-                e.preventDefault();
-                var message = {
-                    username: pseudo,
-                    message: $messageInput.val()
-                }
-
-                // Server emition
-                socket.emit('user-message', message);
-
-                // Local
-                addMessage({
-                    username: pseudo,
-                    message: $messageInput.val()
-                });
-
-                // Clean form
-                $messageInput.val("");
-            });
-        </script>
+        <script src="public/js/chatroom.js"></script>
     </body>
 </html>

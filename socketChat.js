@@ -26,6 +26,8 @@ var express = require('express'),
         socket.broadcast.emit('user-is-typing', baseMessage);
     };
 
+app.use("/public", express.static(__dirname + "/public"));
+
 app.use(session({secret: 'chatroom'}))
 .use(initSession)
 
