@@ -4,6 +4,7 @@ var express = require('express'),
     ent = require('ent'), // Escape unsafe characters middleware
     _und = require('underscore'), // Parameters middleware
     urlencodedParser = bodyParser.urlencoded({ extended: false }),
+    onlineUsers = [],
     typingUsers = [],
 
     app = express(),
@@ -48,8 +49,10 @@ io.sockets.on('connection', function (socket, pseudo) {
     // On signale aux autres clients qu'il y a un nouveau venu
     socket.on('new_connection', function(pseudo) {
         socket.pseudo = pseudo;
-        console.log(pseudo + ' is connected');
+        onlineUsers.push(pseudo);
+        console.log(pseudo + ' is now connected');
         socket.broadcast.emit('chatroom-information', '<b>'+pseudo+'</b> vient de se connecter ! ');
+        socket.broadcast.emit('online-users-update', onlineUsers);
     });
 
     // Dès qu'on reçoit un "message" (clic sur le bouton), on le note dans la console

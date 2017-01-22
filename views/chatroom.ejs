@@ -7,14 +7,17 @@
  
     <body>
         <h1>Mini chatroom!</h1>
-        <div class="chat-container"></div>
-        <div class="is-typing"></div>
-        <form action="/chatroom/send/" method="post">
-            <p>
-                <input type="text" name="newMessage" id="newMessage" />
-                <input type="submit" value="Send"/>
-            </p>
-        </form>
+        <div class="message-zone">
+            <div class="chat-container"></div>
+            <div class="is-typing"></div>
+            <form action="/chatroom/send/" method="post">
+                <p>
+                    <input type="text" name="newMessage" id="newMessage" />
+                    <input type="submit" value="Send"/>
+                </p>
+            </form>
+        </div>
+        <ul class="user-list"></ul>
 
         <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
         <script src="/socket.io/socket.io.js"></script>
@@ -23,6 +26,7 @@
                 $chatContainer = $('.chat-container'),
                 $messageInput = $('#newMessage'),
                 $isTypingField = $('.is-typing'),
+                $userList = $('.user-list'),
                 pseudo = prompt('Quel est votre pseudo ?'),
                 addMessage = function(message) {
                     $('.chat-container').append('<div class="user-message"><span class="username">'+message.username+'</span> : '+message.message+'</div>');
@@ -54,14 +58,21 @@
                     socket.emit('user-is-typing', pseudo);
                 } else {
                     socket.emit('user-has-stop-typing', pseudo);
-                    console.log('stop typing!');
                 }
             });
 
             // Display a message if someone is typing
             socket.on('user-is-typing', function(message) {
-                console.log('someone is typing!', message);
                 $isTypingField.text(message);
+            });
+
+            // Update online user list when it changes
+            socket.on('online-users-update', function(onlineUsers) {
+                var list = '';
+                onlineUsers.forEach(function(userName) {
+                    list += '<li>'+userName+'</li>';
+                });
+                $userList.html(list);
             });
 
             // Send message to server and add it to local chatbox
