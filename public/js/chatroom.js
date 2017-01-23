@@ -15,7 +15,7 @@ socket.emit('new_connection', pseudo);
 // Handle messages from server
 socket.on('chatroom-information', function(message) {
     $('.chat-container').append('<div class="chatroom-information"><i>'+message+'</i></div>');
-})
+});
 
 // Display received message from another user
 socket.on('user-message', addMessage);
@@ -47,7 +47,8 @@ socket.on('user-is-typing', function(message) {
 socket.on('online-users-update', function(onlineUsers) {
     var list = '';
     onlineUsers.forEach(function(userName) {
-        list += '<div class="user-list-item">'+userName+'</div>';
+        var isMeClass = userName === pseudo ? ' is-me' : '';
+        list += '<div class="user-list-item'+isMeClass+'">'+userName+'</div>';
     });
     $userList.html(list);
 });
@@ -58,7 +59,7 @@ $('form').on('submit', function(e) {
     var message = {
         username: pseudo,
         message: $messageInput.val()
-    }
+    };
 
     // Server emition
     socket.emit('user-message', message);
