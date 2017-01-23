@@ -32,9 +32,9 @@ $messageInput.on('blur', function(e) {
 $messageInput.on('input', function(e) {
     if($messageInput.val() && $messageInput.val() !== $messageInput.data('oldvalue')) {
         $messageInput.data('oldvalue', $messageInput.val());
-        socket.emit('user-is-typing', pseudo);
+        socket.emit('user-is-typing');
     } else {
-        socket.emit('user-has-stop-typing', pseudo);
+        socket.emit('user-has-stop-typing');
     }
 });
 
@@ -72,4 +72,7 @@ $('form').on('submit', function(e) {
 
     // Clean form
     $messageInput.val("");
+
+    // Assume that user isn't typing anymore
+    socket.emit('user-has-stop-typing');
 });
