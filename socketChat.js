@@ -48,6 +48,17 @@ io.sockets.on('connection', function (socket, pseudo) {
     // Connection feedback to client
     socket.emit('message', 'Vous êtes bien connecté !');
 
+    socket.on('disconnect',function(){
+        onlineUsers = _und.reject(onlineUsers, function(username){
+            if(username === socket.pseudo) {
+                console.log(socket.pseudo + 'has disconnected');
+                socket.broadcast.emit('chatroom-information', '<b>'+socket.pseudo+'</b> vient de se déconnecter ! ');
+                return true;
+            }
+        });
+        socket.broadcast.emit('online-users-update', onlineUsers);
+    });
+
     // On signale aux autres clients qu'il y a un nouveau venu
     socket.on('new_connection', function(pseudo) {
         socket.pseudo = pseudo;
