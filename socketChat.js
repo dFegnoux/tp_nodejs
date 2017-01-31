@@ -6,6 +6,7 @@ var express = require('express'),
     urlencodedParser = bodyParser.urlencoded({ extended: false }),
     onlineUsers = [],
     typingUsers = [],
+    lastMessages = [],
 
     app = express(),
     server = require('http').Server(app),
@@ -15,7 +16,7 @@ var express = require('express'),
             req.session.chatroom = [];
         }
         next();
-    };
+    },
 
     updateUserTyping = function(socket) {
         var baseMessage = '';
@@ -24,6 +25,14 @@ var express = require('express'),
             baseMessage = typingUsers.join(', ') +' '+ singplural + ' typing something...';
         }
         socket.broadcast.emit('user-is-typing', baseMessage);
+    },
+
+    updateLastMessages = function(message) {
+        var messageslimit = 5; 
+        lastMessages.push(message);
+        if(lastMessages.length > messageslimit) {
+            lastMessages.slice(messageslimit);
+        }
     };
 
 app.use("/public", express.static(__dirname + "/public"));
@@ -65,14 +74,16 @@ io.sockets.on('connection', function (socket, pseudo) {
         onlineUsers.push(pseudo);
         console.log(pseudo + ' is now connected');
         socket.broadcast.emit('chatroom-information', '<b>'+pseudo+'</b> vient de se connecter ! ');
-        socket.broadcast.emit('online-users-update', onlineUsers);
+        io.sockets.emit('online-users-update', onlineUsers);
+        socket.emit('get-last-messages', lastMessages);
     });
 
     // Dès qu'on reçoit un "message" (clic sur le bouton), on le note dans la console
     socket.on('user-message', function (content) {
         console.log(content.username + ': ' + content.message);
         content.message = ent.encode(content.message);
-        socket.broadcast.emit('user-message', content);
+        io.sockets.emit('user-message', content);
+        updateLastMessages(content);
     }); 
 
     // Listen if user is typing then broadcast it

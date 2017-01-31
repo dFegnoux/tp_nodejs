@@ -14,7 +14,7 @@ socket.emit('new_connection', pseudo);
 
 // Handle messages from server
 socket.on('chatroom-information', function(message) {
-    $('.chat-container').append('<div class="chatroom-information"><i>'+message+'</i></div>');
+    $chatContainer.append('<div class="chatroom-information"><i>'+message+'</i></div>');
 });
 
 // Display received message from another user
@@ -64,15 +64,17 @@ $('form').on('submit', function(e) {
     // Server emition
     socket.emit('user-message', message);
 
-    // Local
-    addMessage({
-        username: pseudo,
-        message: $messageInput.val()
-    });
-
     // Clean form
     $messageInput.val("");
 
     // Assume that user isn't typing anymore
     socket.emit('user-has-stop-typing');
+});
+
+socket.on('get-last-messages', function(lastMessages) {
+    var messagesOutput = '';
+    lastMessages.forEach(function(message) {
+        messagesOutput += '<div class="user-message"><span class="username">'+message.username+'</span> : '+message.message+'</div>';
+    });
+    $chatContainer.append(messagesOutput);
 });
