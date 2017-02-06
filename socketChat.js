@@ -60,7 +60,7 @@ io.sockets.on('connection', function (socket, pseudo) {
     socket.on('disconnect',function(){
         onlineUsers = _und.reject(onlineUsers, function(username){
             if(username === socket.pseudo) {
-                console.log(socket.pseudo + 'has disconnected');
+                console.log(socket.pseudo +' has disconnected');
                 socket.broadcast.emit('chatroom-information', '<b>'+socket.pseudo+'</b> vient de se déconnecter ! ');
                 return true;
             }
@@ -71,11 +71,16 @@ io.sockets.on('connection', function (socket, pseudo) {
     // On signale aux autres clients qu'il y a un nouveau venu
     socket.on('new_connection', function(pseudo) {
         socket.pseudo = pseudo;
-        onlineUsers.push(pseudo);
-        console.log(pseudo + ' is now connected');
-        socket.broadcast.emit('chatroom-information', '<b>'+pseudo+'</b> vient de se connecter ! ');
-        io.sockets.emit('online-users-update', onlineUsers);
-        socket.emit('get-last-messages', lastMessages);
+
+        if(onlineUsers.indexOf(pseudo) === -1) {
+            onlineUsers.push(pseudo);
+            console.log(pseudo + ' is now connected');
+            socket.broadcast.emit('chatroom-information', '<b>'+pseudo+'</b> vient de se connecter ! ');
+            io.sockets.emit('online-users-update', onlineUsers);
+            socket.emit('get-last-messages', lastMessages);
+        } else {
+            socket.emit('not-valid-nickname');
+        }
     });
 
     // Dès qu'on reçoit un "message" (clic sur le bouton), on le note dans la console

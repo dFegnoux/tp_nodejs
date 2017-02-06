@@ -5,13 +5,13 @@ A simple chat in NodeJS with socket.io. I followed a turorial on [openclassroom]
 ## So, what we have today?
 * User can :
   * connect to the chat by using a nickname
+  * prevent user to use same nickname as another
   * see last 10 messages of the chat
   * send messages to the chat (duh)
   * see online users
   * see if users are writting a message
 
 ## What will be added?
-* Prevent user to use same nickname
 * Put a better style
 * Show that user is writting directly on user list
 * Add avatar for users

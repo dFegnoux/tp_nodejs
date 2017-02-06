@@ -3,14 +3,29 @@ var socket = io.connect('http://localhost:8080'),
     $messageInput = $('#newMessage'),
     $isTypingField = $('.is-typing'),
     $userList = $('.user-list'),
-    pseudo = prompt('Quel est votre pseudo ?'),
+    pseudo = null,
+    connectToChat = function(chooseNicknameText) {
+        pseudo = prompt(chooseNicknameText);
+        if(typeof(pseudo) === 'string' && pseudo.length) {
+            socket.emit('new_connection', pseudo);
+        } else if (pseudo === null) {
+            socket.disconnect();
+        } else {
+            connectToChat("Huh... Let say that you haven't understand... pretty please choose a nickname");
+        }
+    },
     addMessage = function(message) {
         $chatContainer.append('<div class="user-message"><span class="username">'+message.username+'</span> : '+message.message+'</div>');
         $chatContainer[0].scrollTop = $chatContainer[0].scrollHeight;
     };
 
-// Notify new user to server
-socket.emit('new_connection', pseudo);
+//Try to connect user to chat by choosing a nickname
+connectToChat('Please choose a nickname');
+
+// If nickname is not valid ask another nickname
+socket.on('not-valid-nickname', function() {
+    connectToChat('It seems your nickname is already taken, try another one ?');
+});
 
 // Handle messages from server
 socket.on('chatroom-information', function(message) {
