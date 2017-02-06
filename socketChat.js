@@ -27,12 +27,13 @@ var express = require('express'),
         socket.broadcast.emit('user-is-typing', baseMessage);
     },
 
-    updateLastMessages = function(message) {
+    addMessageAndUpdate = function(io, message) {
         var messageslimit = 5; 
         lastMessages.push(message);
         if(lastMessages.length > messageslimit) {
             lastMessages.slice(messageslimit);
         }
+        io.sockets.emit('new-message', message);
     };
 
 app.use("/public", express.static(__dirname + "/public"));
@@ -53,58 +54,70 @@ app.use(session({secret: 'chatroom'}))
 // Chargement de socket.io
 var io = require('socket.io').listen(server);
 
-io.sockets.on('connection', function (socket, pseudo) {
+io.sockets.on('connection', function (socket, nickname) {
     // Connection feedback to client
     socket.emit('message', 'Vous êtes bien connecté !');
 
+    // Disconnect user and remove him from online users list
     socket.on('disconnect',function(){
         onlineUsers = _und.reject(onlineUsers, function(username){
-            if(username === socket.pseudo) {
-                console.log(socket.pseudo +' has disconnected');
-                socket.broadcast.emit('chatroom-information', '<b>'+socket.pseudo+'</b> vient de se déconnecter ! ');
+            if(username === socket.nickname) {
+                console.log(socket.nickname +' has disconnected');
+                addMessageAndUpdate(io, {
+                    type: 'info',
+                    author: 'server',
+                    content: '<b>'+socket.nickname+'</b> has just disconnected !',
+                });
                 return true;
             }
         });
         socket.broadcast.emit('online-users-update', onlineUsers);
     });
 
-    // On signale aux autres clients qu'il y a un nouveau venu
-    socket.on('new_connection', function(pseudo) {
-        socket.pseudo = pseudo;
-
-        if(onlineUsers.indexOf(pseudo) === -1) {
-            onlineUsers.push(pseudo);
-            console.log(pseudo + ' is now connected');
-            socket.broadcast.emit('chatroom-information', '<b>'+pseudo+'</b> vient de se connecter ! ');
+    // Allow or not user to connect by is nickname validity then notify his connection to the others
+    socket.on('new_connection', function(nickname) {
+        if(onlineUsers.indexOf(nickname) === -1) {
+            socket.nickname = nickname;
+            onlineUsers.push(socket.nickname);
+            console.log(socket.nickname + ' is now connected');
+            addMessageAndUpdate(io, {
+                type: 'info',
+                author: 'server',
+                content: '<b>'+socket.nickname+'</b> has join the chat !',
+            });
             io.sockets.emit('online-users-update', onlineUsers);
             socket.emit('get-last-messages', lastMessages);
+            socket.emit('comfirm-connection', socket.nickname);
         } else {
             socket.emit('not-valid-nickname');
         }
     });
 
-    // Dès qu'on reçoit un "message" (clic sur le bouton), on le note dans la console
+    // As soon server receives a message, send it to other users and update last messages list
     socket.on('user-message', function (content) {
-        console.log(content.username + ': ' + content.message);
-        content.message = ent.encode(content.message);
-        io.sockets.emit('user-message', content);
-        updateLastMessages(content);
+        console.log(socket.nickname + ': ' + content);
+        addMessageAndUpdate(io, {
+            type: 'user-message',
+            author: socket.nickname,
+            content: ent.encode(content),
+        });
     }); 
 
     // Listen if user is typing then broadcast it
     socket.on('user-is-typing', function() {
         console.log('*Start function* Typing users right now : ', typingUsers);
-        if(_und.indexOf(typingUsers, socket.pseudo) === -1) {
-            console.log(socket.pseudo+' starts writing');
-            typingUsers.push(socket.pseudo);
+        if(_und.indexOf(typingUsers, socket.nickname) === -1) {
+            console.log(socket.nickname+' starts writing');
+            typingUsers.push(socket.nickname);
             updateUserTyping(socket);
         }
         console.log('*End function* Typing users right now : ', typingUsers);
     });
 
+    // Remove user from writers list when it stops
     socket.on('user-has-stop-typing', function() {
-        console.log(socket.pseudo+' has stop typing');
-        var indexOfUser = _und.indexOf(typingUsers, socket.pseudo);
+        console.log(socket.nickname+' has stop typing');
+        var indexOfUser = _und.indexOf(typingUsers, socket.nickname);
         if(indexOfUser > -1) {
             typingUsers.splice(indexOfUser, 1);
         }
