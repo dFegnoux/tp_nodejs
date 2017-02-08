@@ -55,13 +55,22 @@ form {
 	width: 10%;
 }
 
-.user-list {
+.aside {
 	position: relative;
 	float: left;
 	overflow-y: scroll;
-	border: 1px solid lightgrey;
+	
 	width: 20%;
 	height: 100%;
+}
+
+.user-profile {
+	height: 30%;
+}
+
+.user-list {
+	border: 1px solid lightgrey;
+	height: 70%;
 }
 
 .user-list-item {

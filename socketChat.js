@@ -80,14 +80,37 @@ io.sockets.on('connection', function (socket, nickname) {
             socket.nickname = nickname;
             onlineUsers.push(socket.nickname);
             console.log(socket.nickname + ' is now connected');
+            socket.emit('get-last-messages', lastMessages);
             addMessageAndUpdate(io, {
                 type: 'info',
                 author: 'server',
                 content: '<b>'+socket.nickname+'</b> has join the chat !',
             });
             io.sockets.emit('online-users-update', onlineUsers);
-            socket.emit('get-last-messages', lastMessages);
             socket.emit('comfirm-connection', socket.nickname);
+        } else {
+            socket.emit('not-valid-nickname');
+        }
+    });
+
+    // Allow or not user to change his nickname
+    socket.on('change-nickname', function(newNickname) {
+        if(onlineUsers.indexOf(nickname) === -1) {
+            var index = onlineUsers.indexOf(socket.nickname);
+            if(index !== -1) {
+                onlineUsers.splice(index, 1 , newNickname);
+            } else {
+                onlineUsers.push(newNickname);
+            }
+            console.log(socket.nickname + ' is now ' +newNickname);
+            addMessageAndUpdate(io, {
+                type: 'info',
+                author: 'server',
+                content: '<b>'+socket.nickname+'</b> is now <b>'+newNickname+'</b> !',
+            });
+            socket.nickname = newNickname;
+            socket.emit('comfirm-changed-nickname', socket.nickname);
+            io.sockets.emit('online-users-update', onlineUsers);
         } else {
             socket.emit('not-valid-nickname');
         }

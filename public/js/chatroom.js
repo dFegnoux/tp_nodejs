@@ -20,6 +20,16 @@ var socket = io.connect('http://localhost:8080'),
             connectToChat("Huh... Let say that you haven't understand... pretty please choose a nickname");
         }
     },
+    changeNickname = function() {
+        var newNickname = prompt("What will be your new nickname ?");
+        if(typeof(newNickname) === 'string' && newNickname.length && newNickname !== nickname) {
+            socket.emit('change-nickname', newNickname);
+        } else if (newNickname === null) {
+            return;
+        } else {
+            changeNickname("Huh... Let say that you haven't understand... pretty please choose a nickname");
+        }
+    },
     addMessage = function(message) {
         if(message.type == 'user-message') {
             $chatContainer.append(getUserMessage(message));
@@ -27,15 +37,19 @@ var socket = io.connect('http://localhost:8080'),
             $chatContainer.append(getInfoMessage(message));
         }
         $chatContainer[0].scrollTop = $chatContainer[0].scrollHeight;
+    },
+    setNickname = function(newNickName) {
+        nickname = newNickname;
     };
 
 //Try to connect user to chat by choosing a nickname
 connectToChat('Please choose a nickname');
 
 //Set nickname only if server has confirmed
-socket.on('confirm-connection', function(confirmedNickname) {
-    nickname = confirmedNickname;
-});
+socket.on('confirm-connection', setNickname);
+
+//Reset nickname only if server has confirmed
+socket.on('confirm-changed-nickname', setNickname);
 
 // If nickname is not valid ask another nickname
 socket.on('not-valid-nickname', function() {
@@ -72,11 +86,22 @@ socket.on('user-is-typing', function(message) {
 socket.on('online-users-update', function(onlineUsers) {
     var list = '';
     onlineUsers.forEach(function(userName) {
+        console.log(userName, nickname);
         var isMeClass = userName === nickname ? ' is-me' : '';
         list += '<div class="user-list-item'+isMeClass+'">'+userName+'</div>';
     });
     $userList.html(list);
 });
+
+// Get last n messages
+socket.on('get-last-messages', function(lastMessages) {
+    var messagesOutput = '';
+    lastMessages.forEach(function(message) {
+        addMessage(message);
+    });
+});
+
+// User interface actions
 
 // Send message to server and add it to local chatbox
 $('form').on('submit', function(e) {
@@ -92,10 +117,5 @@ $('form').on('submit', function(e) {
     socket.emit('user-has-stop-typing');
 });
 
-// Get last n messages
-socket.on('get-last-messages', function(lastMessages) {
-    var messagesOutput = '';
-    lastMessages.forEach(function(message) {
-        addMessage(message);
-    });
-});
+// Change nickname 
+$('#change-nickname').on('click', changeNickname);
