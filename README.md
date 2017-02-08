@@ -10,16 +10,18 @@ A simple chat in NodeJS with socket.io. I followed a turorial on [openclassroom]
   * send messages to the chat (duh)
   * see online users
   * see if users are writting a message
+  * Let users change their nickname (will notify other users)
 
 ## What will be added?
 * Put a better style
 * Show that user is writting directly on user list
 * Add avatar for users
-* Let users change their nickname
-  * and notify other users of the nickname changes
 * Add channels
 * Add private messages (I think it's the same of channels we'll see)
 * Possibility to flag a user by clicking on it's nickname or just write @user_nickname
   * Notify flagged user of that message
+
+## Bugs to fix
+* User nickname isn't in bold in users list
 
 I hope that listing that will help me to work on a specific task faster than by asking myself "What the hell should continue with?" :)
