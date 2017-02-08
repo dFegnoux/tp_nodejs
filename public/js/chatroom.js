@@ -3,13 +3,18 @@ var socket = io.connect('http://localhost:8080'),
     $messageInput = $('#newMessage'),
     $isTypingField = $('.is-typing'),
     $userList = $('.user-list'),
+    $notificationCheckbox = $('#allow-notifications-btn'),
     nickname = null,
+    isNotificationAllowed = ('Notification' in window) ? $notificationCheckbox.is(':checked') : false;
+
     getUserMessage = function(message) {
         return '<div class="user-message"><span class="username">'+message.author+'</span> : '+message.content+'</div>';
     },
+
     getInfoMessage = function(message) {
         return '<div class="chatroom-information"><i>'+message.content+'</i></div>';
     },
+
     connectToChat = function(chooseNicknameText) {
         var newNickname = prompt(chooseNicknameText);
         if(typeof(newNickname) === 'string' && newNickname.length) {
@@ -17,9 +22,10 @@ var socket = io.connect('http://localhost:8080'),
         } else if (newNickname === null) {
             socket.disconnect();
         } else {
-            connectToChat("Huh... Let say that you haven't understand... pretty please choose a nickname");
+            connectToChat("Huh… Let say that you haven't understand… pretty please choose a nickname");
         }
     },
+
     changeNickname = function() {
         var newNickname = prompt("What will be your new nickname ?");
         if(typeof(newNickname) === 'string' && newNickname.length && newNickname !== nickname) {
@@ -27,9 +33,10 @@ var socket = io.connect('http://localhost:8080'),
         } else if (newNickname === null) {
             return;
         } else {
-            changeNickname("Huh... Let say that you haven't understand... pretty please choose a nickname");
+            changeNickname("Huh… Let say that you haven't understand… pretty please choose a nickname");
         }
     },
+
     addMessage = function(message) {
         if(message.type == 'user-message') {
             $chatContainer.append(getUserMessage(message));
@@ -38,7 +45,8 @@ var socket = io.connect('http://localhost:8080'),
         }
         $chatContainer[0].scrollTop = $chatContainer[0].scrollHeight;
     },
-    setNickname = function(newNickName) {
+
+    setNickname = function(newNickname) {
         nickname = newNickname;
     };
 
@@ -57,7 +65,14 @@ socket.on('not-valid-nickname', function() {
 });
 
 // Display received message from another user
-socket.on('new-message', addMessage);
+socket.on('new-message', function(message) {
+    addMessage(message);
+    if(isNotificationAllowed && message.content.match('@'+nickname)) {
+        var stripedMessage = message.content.replace(/<span class="username">@(.*)<\/span>/g, "$1"),
+            formatedMessage = stripedMessage.length > 100  ? stripedMessage.substr(0, 100)+'…' : stripedMessage,
+            notification = new Notification(message.author+' says :', {body: formatedMessage});
+    }
+});
 
 $messageInput.on('focus', function(e) {
     $messageInput.data('oldvalue', $messageInput.val());
@@ -86,7 +101,6 @@ socket.on('user-is-typing', function(message) {
 socket.on('online-users-update', function(onlineUsers) {
     var list = '';
     onlineUsers.forEach(function(userName) {
-        console.log(userName, nickname);
         var isMeClass = userName === nickname ? ' is-me' : '';
         list += '<div class="user-list-item'+isMeClass+'">'+userName+'</div>';
     });
@@ -119,3 +133,13 @@ $('form').on('submit', function(e) {
 
 // Change nickname 
 $('#change-nickname').on('click', changeNickname);
+
+$userList.on('click', '.user-list-item', function(e) {
+    var space = !$messageInput.val().length ? ' ' : '';
+    $messageInput.val($messageInput.val() + "@"+$(e.currentTarget).text() + space);
+    $messageInput.focus();
+});
+
+$notificationCheckbox.on('change', function() {
+    isNotificationAllowed = $notificationCheckbox.is(':checked');
+});

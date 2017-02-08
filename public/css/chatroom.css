@@ -12,6 +12,10 @@ h1 {
 	font-size: 1.5rem;
 }
 
+.username {
+	font-weight: bold;
+}
+
 .container {
 	position: relative;
 	overflow: hidden;
@@ -71,6 +75,16 @@ form {
 .user-list {
 	border: 1px solid lightgrey;
 	height: 70%;
+}
+
+.is-me {
+	background: lightgrey;
+	cursor: initial;
+	font-weight: bold;
+}
+
+.is-me:hover {
+	background: lightgrey;
 }
 
 .user-list-item {

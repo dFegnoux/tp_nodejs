@@ -27,13 +27,19 @@ var express = require('express'),
         socket.broadcast.emit('user-is-typing', baseMessage);
     },
 
+    formatMessage = function(message) {
+        message.content = message.content.replace(/@([a-zA-Z]*)/g, '<span class="username">$&</span>');
+        return message;
+    };
+
     addMessageAndUpdate = function(io, message) {
-        var messageslimit = 5; 
-        lastMessages.push(message);
+        var messageslimit = 5;
+        var formatedMessage = formatMessage(message);
+        lastMessages.push(formatedMessage);
         if(lastMessages.length > messageslimit) {
             lastMessages.slice(messageslimit);
         }
-        io.sockets.emit('new-message', message);
+        io.sockets.emit('new-message', formatedMessage);
     };
 
 app.use("/public", express.static(__dirname + "/public"));
@@ -66,7 +72,7 @@ io.sockets.on('connection', function (socket, nickname) {
                 addMessageAndUpdate(io, {
                     type: 'info',
                     author: 'server',
-                    content: '<b>'+socket.nickname+'</b> has just disconnected !',
+                    content: '<span class="username">'+socket.nickname+'</span> has just disconnected !',
                 });
                 return true;
             }
@@ -84,10 +90,10 @@ io.sockets.on('connection', function (socket, nickname) {
             addMessageAndUpdate(io, {
                 type: 'info',
                 author: 'server',
-                content: '<b>'+socket.nickname+'</b> has join the chat !',
+                content: '<span class="username">'+socket.nickname+'</span> has join the chat !',
             });
+            socket.emit('confirm-connection', socket.nickname);
             io.sockets.emit('online-users-update', onlineUsers);
-            socket.emit('comfirm-connection', socket.nickname);
         } else {
             socket.emit('not-valid-nickname');
         }
@@ -106,10 +112,10 @@ io.sockets.on('connection', function (socket, nickname) {
             addMessageAndUpdate(io, {
                 type: 'info',
                 author: 'server',
-                content: '<b>'+socket.nickname+'</b> is now <b>'+newNickname+'</b> !',
+                content: '<span class="username">'+socket.nickname+'</span> is now <span class="username">'+newNickname+'</span> !',
             });
             socket.nickname = newNickname;
-            socket.emit('comfirm-changed-nickname', socket.nickname);
+            socket.emit('confirm-changed-nickname', socket.nickname);
             io.sockets.emit('online-users-update', onlineUsers);
         } else {
             socket.emit('not-valid-nickname');
